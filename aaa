@@ -6,25 +6,67 @@
   },
   "inbounds": [
     {
-      "port": 23182,
-      "protocol": "vmess",
+      "tag": "socks",
+      "port": 10808,
+      "listen": "127.0.0.1",
+      "protocol": "socks",
+      "sniffing": {
+        "enabled": true,
+        "destOverride": [
+          "http",
+          "tls"
+        ]
+      },
+      "settings": {
+        "auth": "noauth",
+        "udp": true,
+        "allowTransparent": false
+      }
+    },
+    {
+      "tag": "http",
+      "port": 10809,
+      "listen": "127.0.0.1",
+      "protocol": "http",
+      "sniffing": {
+        "enabled": true,
+        "destOverride": [
+          "http",
+          "tls"
+        ]
+      },
       "settings": {
         "udp": false,
-        "clients": [
-          {
-            "id": "e9387538-1703-446f-be2e-d0f848b2624c",
-            "alterId": 0,
-            "email": "t@t.tt"
-          }
-        ],
         "allowTransparent": false
+      }
+    }
+  ],
+  "outbounds": [
+    {
+      "tag": "proxy",
+      "protocol": "vmess",
+      "settings": {
+        "vnext": [
+          {
+            "address": "193.22.152.167",
+            "port": 23182,
+            "users": [
+              {
+                "id": "e9387538-1703-446f-be2e-d0f848b2624c",
+                "alterId": 0,
+                "email": "t@t.tt",
+                "security": "auto"
+              }
+            ]
+          }
+        ]
       },
       "streamSettings": {
         "network": "kcp",
         "kcpSettings": {
           "mtu": 1350,
           "tti": 50,
-          "uplinkCapacity": 100,
+          "uplinkCapacity": 12,
           "downlinkCapacity": 100,
           "congestion": false,
           "readBufferSize": 2,
@@ -33,11 +75,45 @@
             "type": "srtp"
           }
         }
+      },
+      "mux": {
+        "enabled": false,
+        "concurrency": -1
+      }
+    },
+    {
+      "tag": "direct",
+      "protocol": "freedom",
+      "settings": {}
+    },
+    {
+      "tag": "block",
+      "protocol": "blackhole",
+      "settings": {
+        "response": {
+          "type": "http"
+        }
       }
     }
   ],
   "routing": {
     "domainStrategy": "IPIfNonMatch",
-    "rules": []
+    "domainMatcher": "linear",
+    "rules": [
+      {
+        "type": "field",
+        "inboundTag": [
+          "api"
+        ],
+        "outboundTag": "api",
+        "enabled": true
+      },
+      {
+        "type": "field",
+        "port": "0-65535",
+        "outboundTag": "proxy",
+        "enabled": true
+      }
+    ]
   }
 }
